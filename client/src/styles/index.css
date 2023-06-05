@@ -1,0 +1,13 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  --neutral-content: #ffffff;
+}
+
+.widget-container {
+  border-width: 2px;
+  border-color: #625c53;
+  border-radius: 2px;
+}

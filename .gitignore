@@ -1,0 +1,8 @@
+.env
+*.DS_Store
+*.map
+*bundle.js
+node_modules
+coverage
+.parcel-cache
+dist
