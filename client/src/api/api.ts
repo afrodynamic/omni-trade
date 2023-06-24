@@ -122,7 +122,7 @@ export const tradeApi = createApi({
     }),
 
     getRecentTrades: builder.query({
-      query: ( symbol ) => `/api/v1/market/histories?symbol=${symbol}`,
+      query: (symbol) => `/api/v1/market/histories?symbol=${symbol}`,
       providesTags: (result, error, symbol) => [{ type: 'RecentTrades', symbol }],
       transformResponse: (response: {
         data: {
@@ -238,7 +238,40 @@ export const tradeApi = createApi({
       providesTags: (result, error, { currentPage, pageSize }) =>
         result ? [{ type: 'TradeLogPaginatedList', currentPage, pageSize }] : [],
     }),
-  }),
+
+    cancelOrderByClientOid: builder.mutation<string, string>({
+      query: (clientOid) => {
+        const endpoint = `/api/v1/order/client-order/${clientOid}`;
+        const method = 'DELETE';
+
+        const headers = generateHeaders(method, endpoint);
+
+        return {
+          url: endpoint,
+          method,
+          headers,
+        };
+      }
+    }),
+
+    cancelAllOrders: builder.mutation<string, {
+      symbol?: string,
+      tradeType?: string,
+    }>({
+      query: ({ symbol, tradeType }) => {
+        const endpoint = '/api/v1/orders';
+        const method = 'DELETE';
+
+        const headers = generateHeaders(method, endpoint);
+
+        return {
+          url: endpoint,
+          method,
+          headers,
+        };
+      }
+    })
+  })
 });
 
 export const {
@@ -246,5 +279,7 @@ export const {
   useGetPartOrderBookQuery,
   useGetRecentTradesQuery,
   useGetTradeLogQuery,
-  useCreateNewLimitOrderMutation
+  useCreateNewLimitOrderMutation,
+  useCancelOrderByClientOidMutation,
+  useCancelAllOrdersMutation,
 } = tradeApi;

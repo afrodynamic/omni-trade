@@ -1,8 +1,11 @@
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { Box, Paper, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, Button, Paper, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { useGetTradeLogQuery } from '../../api/api';
+
+import { toast } from 'react-toastify';
+
+import { useCancelAllOrdersMutation, useCancelOrderByClientOidMutation, useGetTradeLogQuery } from '../../api/api';
 
 const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
@@ -15,6 +18,8 @@ export const TradeLogWidget: FC = () => {
   const { data: orderHistoryData, refetch: getTradeLogActive } = useGetTradeLogQuery({
     status: 'active'
   });
+  const [cancelOrderByClientOrderId, { data: canceledOrderId, isLoading: isCanceling}] = useCancelOrderByClientOidMutation();
+  const [cancelAllOrders, { data: canceledAllOrders, isLoading: isCancelingAll}] = useCancelAllOrdersMutation();
 
   const [selectedTab, setSelectedTab] = useState('openOrders');
 
@@ -30,12 +35,8 @@ export const TradeLogWidget: FC = () => {
     });
 
     socket.on('orderChange', (data) => {
-      console.log('start: ', data);
-      if (data.status === 'done') {
-        getTradeLog();
-      } else {
-        getTradeLogActive();
-      }
+      getTradeLog();
+      getTradeLogActive();
     });
 
     socket.on('disconnect', () => {
@@ -51,8 +52,24 @@ export const TradeLogWidget: FC = () => {
     };
   }, []);
 
+  const handleCancelOrder = async(clientOrderId: string) => {
+    const result = await cancelOrderByClientOrderId(clientOrderId);
+
+    if (result.data) {
+      toast.success('Order canceled successfully');
+    }
+  };
+
+  const handleCancelAllOrders = async() => {
+    const result = await cancelAllOrders({});
+
+    if (result.data) {
+      toast.success('All orders canceled successfully');
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
+    <div style={{ display: 'flex', height: '100%', maxHeight: '40vh', overflow: 'hidden' }}>
       <Box sx={{ width: '100%' }}>
         <TabContext value={selectedTab}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -65,7 +82,7 @@ export const TradeLogWidget: FC = () => {
             <TabPanel value="openOrders">
               <Paper sx={{ width: '100%', overflow: 'hidden' }}>
                 <TableContainer sx={{ maxHeight: '46vh' }}>
-                  <Table stickyHeader aria-label="sticky table" size="small">
+                  <Table stickyHeader aria-label="sticky table" size="small" sx={{ maxHeight: '10vh', overflow: 'auto'}}>
                     <TableHead>
                       <TableRow>
                         <TableCell>Date/Time</TableCell>
@@ -74,20 +91,25 @@ export const TradeLogWidget: FC = () => {
                         <TableCell>Order Price</TableCell>
                         <TableCell>Order Quantity</TableCell>
                         <TableCell>Position Value</TableCell>
+                        <TableCell>
+                          <Button variant="text" color="error" size="small" disabled={isCanceling} onClick={handleCancelAllOrders}>
+                            Cancel All
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {isLoading ? (
                         <TableRow>
-                          <TableCell colSpan={6}>Loading...</TableCell>
+                          <TableCell colSpan={7}>Loading...</TableCell>
                         </TableRow>
                       ) : isError ? (
                         <TableRow>
-                          <TableCell colSpan={6}>Error fetching data</TableCell>
+                          <TableCell colSpan={7}>Error fetching data</TableCell>
                         </TableRow>
                       ) : orderHistoryData && orderHistoryData.length < 1 ? (
                         <TableRow>
-                          <TableCell colSpan={6}>No trade history</TableCell>
+                          <TableCell colSpan={7}>No trade history</TableCell>
                         </TableRow>
                       ) : (
                         orderHistoryData?.map((trade, index) => (
@@ -98,6 +120,11 @@ export const TradeLogWidget: FC = () => {
                             <TableCell>{trade.price}</TableCell>
                             <TableCell>{trade.size}</TableCell>
                             <TableCell>${parseFloat(trade.price) * parseFloat(trade.size)}</TableCell>
+                            <TableCell onClick={() => handleCancelOrder(trade.clientOid)}>
+                              <Button variant="contained" color="error" size="small" disabled={isCanceling}>
+                                Cancel
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
