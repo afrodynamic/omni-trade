@@ -5,7 +5,6 @@ import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
 import { useCreateNewLimitOrderMutation, useGetAccountsQuery } from '../../api/api';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { OrderType } from '../types';
@@ -107,7 +106,6 @@ export const TradeEntryWidget = () => {
   const handleQuickBuyButton = (percentage: number) => {
     const amount = (parseFloat(selectedSymbolBalance) * percentage) / 100;
     dispatch(setBuyQuantity(amount.toFixed(2)));
-    setBuyVolumeTotal(parseFloat(buyLimitPrice) * amount);
   };
 
   const handleQuickSellButton = (percentage: number) => {
@@ -130,7 +128,7 @@ export const TradeEntryWidget = () => {
 
     if ('data' in result) {
       const orderId = result.data;
-      toast.success('Order created successfully');
+      toast.success('Buy Order created successfully');
       await axios.post('http://localhost:3000/api/orders', { 'orderId': orderId });
     } else {
       const error = result.error;
@@ -139,13 +137,22 @@ export const TradeEntryWidget = () => {
   };
 
   const handleSellButton = async() => {
-    await createNewLimitOrder({
+    const result = await createNewLimitOrder({
       side: 'sell',
       symbol: symbol,
       type: 'limit',
       price: sellLimitPrice,
       size: sellQuantity,
     });
+
+    if ('data' in result) {
+      const orderId = result.data;
+      toast.success('Sell Order created successfully');
+      await axios.post('http://localhost:3000/api/orders', { 'orderId': orderId });
+    } else {
+      const error = result.error;
+      console.error('Error creating order:', error);
+    }
   };
 
   const handleBuyFocus = (inputName: string) => {
@@ -257,12 +264,13 @@ export const TradeEntryWidget = () => {
             </FormControl>
 
             <FormControl fullWidth sx={{ m: 1 }}>
-              <InputLabel htmlFor="outlined-adornment-buy-base-balance">Base Balance</InputLabel>
+              <InputLabel htmlFor="outlined-adornment-buy-quote-balance">Quote Balance</InputLabel>
               <OutlinedInput
-                id="outlined-adornment-buy-base-balance"
-                endAdornment={<InputAdornment position="end">{baseCurrency}</InputAdornment>}
-                label="Base Balance"
-                value={selectedSymbolBalance}
+                id="outlined-adornment-buy-quote-balance"
+                startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                endAdornment={<InputAdornment position="end">{quoteCurrency}</InputAdornment>}
+                label="Quote Balance"
+                value={accountBalance}
                 readOnly
               />
             </FormControl>
@@ -358,13 +366,12 @@ export const TradeEntryWidget = () => {
           </FormControl>
 
           <FormControl fullWidth sx={{ m: 1 }}>
-            <InputLabel htmlFor="outlined-adornment-sell-quote-balance">Quote Balance</InputLabel>
+            <InputLabel htmlFor="outlined-adornment-sell-base-balance">Base Balance</InputLabel>
             <OutlinedInput
-              id="outlined-adornment-sell-quote-balance"
-              startAdornment={<InputAdornment position="start">$</InputAdornment>}
-              endAdornment={<InputAdornment position="end">{quoteCurrency}</InputAdornment>}
-              label="Quote Balance"
-              value={accountBalance}
+              id="outlined-adornment-sell-base-balance"
+              endAdornment={<InputAdornment position="end">{baseCurrency}</InputAdornment>}
+              label="Base Balance"
+              value={selectedSymbolBalance}
               readOnly
             />
           </FormControl>
