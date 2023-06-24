@@ -68,7 +68,7 @@ export const RecentTradesWidget: FC = () => {
       <h2 className='ml-2 text-center'>Recent Trades</h2>
 
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: '42vh' }}>
+        <TableContainer sx={{ maxHeight: '40vh' }}>
           <Table stickyHeader aria-label="sticky table" size="small">
             <TableHead>
               <TableRow>

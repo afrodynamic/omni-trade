@@ -1,3 +1,5 @@
+import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
+import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import { FC, useEffect } from 'react';
@@ -17,7 +19,8 @@ export const OrderBookWidget: FC = () => {
   const baseCurrency = useAppSelector((state) => state.app.baseCurrency);
   const quoteCurrency = useAppSelector((state) => state.app.quoteCurrency);
   const orderBook = useAppSelector((state) => state.orderBook);
-
+  const currentPrice = useAppSelector((state) => state.recentTrades.currentPrice);
+  const lastTradeSide = useAppSelector((state) => state.recentTrades.lastTradeSide);
 
   const { data: orderBookData, isLoading, isError } = useGetPartOrderBookQuery({ symbol, level });
 
@@ -59,8 +62,8 @@ export const OrderBookWidget: FC = () => {
     <div className='h-full flex flex-col items-center'>
       <h2 className='text-center'>Orderbook</h2>
 
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: '42vh' }}>
+      <Paper sx={{ width: '100%' }}>
+        <TableContainer sx={{ maxHeight: '18vh', overflow: 'auto' }}>
           <Table stickyHeader aria-label="sticky table" size="small">
             <TableHead>
               <TableRow>
@@ -87,6 +90,33 @@ export const OrderBookWidget: FC = () => {
                   </TableRow>
                 ))
               )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <TableContainer sx={{ minHeight: '4vh' }}>
+          <Table stickyHeader aria-label="sticky table" size="small">
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={2} sx={{ color: 'white', fontSize: '20px' }}>
+                  Current Price:
+                </TableCell>
+                <TableCell colSpan={1} sx={{ color: 'yellow', fontSize: '20px', textAlign: 'center' }}>
+                   ${currentPrice}{' '}
+                  {lastTradeSide === 'buy' ? (
+                    <ArrowCircleUpIcon style={{ color: 'green' }} />
+                  ) : (
+                    <ArrowCircleDownIcon style={{ color: 'red' }} />
+                  )}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <TableContainer sx={{ maxHeight: '18vh', overflow: 'auto' }}>
+          <Table stickyHeader aria-label="sticky table" size="small">
+            <TableBody>
               {orderBook?.bids?.map((bid, index) => (
                 <TableRow key={bid[0]} sx={{ bgcolor: index % 2 === 0 ? 'background.paper' : 'background.default'}} onClick={() => handleRowClick(bid[0], bid[1])}>
                   <TableCell sx={{ color: 'green'}}>{bid[0]}</TableCell>
